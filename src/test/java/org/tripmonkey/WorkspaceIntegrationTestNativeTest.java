@@ -3,6 +3,6 @@ package org.tripmonkey;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 
 @QuarkusIntegrationTest
-class GreetingResourceIT extends GreetingResourceTest {
+class WorkspaceIntegrationTestNativeTest extends WorkspaceIntegrationTest {
     // Execute the same tests but in packaged mode.
 }
