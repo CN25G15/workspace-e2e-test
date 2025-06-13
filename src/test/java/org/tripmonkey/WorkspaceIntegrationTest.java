@@ -3,11 +3,14 @@ package org.tripmonkey;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.quarkus.test.junit.QuarkusTest;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.helpers.test.AssertSubscriber;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
+import org.jboss.resteasy.reactive.client.SseEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,8 +24,10 @@ import org.tripmonkey.test.client.NotificationsClient;
 import org.tripmonkey.test.client.WorkspaceClient;
 import org.tripmonkey.workspace.service.User;
 import org.tripmonkey.workspace.service.Workspace;
+import org.tripmonkey.workspace.service.WorkspaceResponse;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 @QuarkusTest
@@ -38,6 +43,9 @@ class WorkspaceIntegrationTest {
     @Inject
     @RestClient
     WorkspaceClient wc;
+
+    @Inject
+    Logger log;
 
     @BeforeAll
     public static void initialize(){
@@ -55,9 +63,13 @@ class WorkspaceIntegrationTest {
         String item = subber.awaitItem(Duration.ofSeconds(5)).assertCompleted().getItem();
         Assertions.assertNotNull(item);
 
-        Workspace.Builder b = Workspace.newBuilder();
+        log.infof("Received \n%s",item);
+
+        WorkspaceResponse.Builder b = WorkspaceResponse.newBuilder();
         Assertions.assertDoesNotThrow(() -> JsonFormat.parser().merge(item, b));
-        Workspace w = b.build();
+        WorkspaceResponse wr = b.build();
+        Assertions.assertTrue(wr.hasWorkspace());
+        Workspace w = wr.getWorkspace();
 
         Assertions.assertDoesNotThrow(() -> workspace = UUID.fromString(w.getWid()));
 
@@ -70,16 +82,18 @@ class WorkspaceIntegrationTest {
     @Order(2)
     void testPatchWithNotification() throws InvalidProtocolBufferException {
 
+        UUID collaborator = UUID.randomUUID();
+
         Assumptions.assumeTrue(workspace != null);
 
-        AssertSubscriber<String> notifications = nc.getNotificationsFor(user.toString())
+        AssertSubscriber<SseEvent<String>> notifications = nc.getNotificationsFor(user.toString())
                 .subscribe().withSubscriber(AssertSubscriber.create());
 
-        String patch = JsonFormat.printer().print(JsonPatch.newBuilder()
-                .setOp(Operation.add)
-                .setPath("collaborators")
-                .setUserId(UserDTO.newBuilder()
-                        .setUserId("b441a660-1020-4b50-869d-b8db5eabee50").build()).build());
+        String patch = String.format(
+                "{\"op\":\"add\",\"path\":\"collaborators\",\"value\":{\"user_id\": \"%s\"}}", collaborator.toString());
+
+
+        log.infof("Built request\n%s",patch);
 
         UniAssertSubscriber<Response> subber = wc.commitPatch(workspace.toString(), user.toString(), patch)
                 .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -91,11 +105,12 @@ class WorkspaceIntegrationTest {
 
         Notification.Builder nb = Notification.newBuilder();
 
-        String n = notifications.getItems().stream()
-                .filter(s -> !s.equals("keep_alive"))
-                .findFirst().orElse(null);
+        SseEvent<String> recv = notifications.awaitNextItem().getLastItem();
 
-        Assertions.assertNotNull(n);
+        log.infof("Received %s", recv.data());
+
+        Assertions.assertNotNull(recv.data());
+        Assertions.assertTrue(recv.data().contains(collaborator.toString()));
 
     }
 

@@ -26,7 +26,7 @@ public interface WorkspaceClient {
     Uni<String> fetchWorkspace(@PathParam("workspace_id") String workspace_uuid, @CookieParam("user") String user_uuid);
 
     @PATCH
-    @Path("/{workspace_id")
+    @Path("/{workspace_id}")
     Uni<Response> commitPatch(@PathParam("workspace_id") String workspace_uuid, @CookieParam("user") String user_uuid,
                               String patch);
 
