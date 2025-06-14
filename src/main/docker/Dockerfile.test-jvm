@@ -29,4 +29,4 @@ ENV MAVEN_CONFIG=""
 COPY src src
 
 #ENTRYPOINT ["./mvnw", "-Dmaven.repo.local=.m2", "quarkus:test"]
-ENTRYPOINT ["./mvnw", "-Dmaven.repo.local=.m2", "test"]
+ENTRYPOINT ["./mvnw", "-Dmaven.repo.local=.m2", "test", "--no-transfer-progress"]
