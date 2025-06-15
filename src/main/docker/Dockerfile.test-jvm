@@ -11,7 +11,6 @@ COPY .gauth/sa-key.json sa-key.json
 # Install google cloud to have access to cloud maven repo and initialize the service account
 RUN curl https://sdk.cloud.google.com > install.sh && bash install.sh --disable-prompts --install-dir=/code > /dev/null 2>&1
 ENV PATH="$PATH:/code/google-cloud-sdk/bin"
-RUN google-cloud-sdk/bin/gcloud auth activate-service-account image-repo-account@cn25-g15-tripmonkey.iam.gserviceaccount.com --key-file=sa-key.json --verbosity=debug
 
 COPY --chmod=0777 mvnw mvnw
 COPY .mvn .mvn
@@ -27,4 +26,4 @@ ENV MAVEN_CONFIG=""
 COPY src src
 
 #ENTRYPOINT ["./mvnw", "-Dmaven.repo.local=.m2", "quarkus:test"]
-ENTRYPOINT ["./mvnw", "-Dmaven.repo.local=.m2", "test", "--no-transfer-progress"]
+ENTRYPOINT ["google-cloud-sdk/bin/gcloud auth activate-service-account image-repo-account@cn25-g15-tripmonkey.iam.gserviceaccount.com --key-file=sa-key.json --verbosity=debug","&&","./mvnw", "-Dmaven.repo.local=.m2", "test", "--no-transfer-progress"]
