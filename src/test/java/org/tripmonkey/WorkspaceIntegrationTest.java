@@ -105,7 +105,7 @@ class WorkspaceIntegrationTest {
 
         Notification.Builder nb = Notification.newBuilder();
 
-        SseEvent<String> recv = notifications.awaitNextItem().getLastItem();
+        SseEvent<String> recv = notifications.awaitNextItem(Duration.ofSeconds(10)).getLastItem();
 
         log.infof("Received %s", recv.data());
 
