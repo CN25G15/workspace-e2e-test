@@ -25,7 +25,7 @@ public interface NotificationsClient {
 
         @Override
         public boolean test(SseEvent<String> event) {
-            return !"keep_alive".equals(event.id());
+            return !"keep_alive".equals(event.data());
         }
     }
 
