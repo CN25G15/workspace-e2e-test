@@ -26,4 +26,4 @@ ENV MAVEN_CONFIG=""
 COPY src src
 
 #ENTRYPOINT ["./mvnw", "-Dmaven.repo.local=.m2", "quarkus:test"]
-ENTRYPOINT ["google-cloud-sdk/bin/gcloud auth activate-service-account image-repo-account@cn25-g15-tripmonkey.iam.gserviceaccount.com --key-file=sa-key.json --verbosity=debug","&&","./mvnw", "-Dmaven.repo.local=.m2", "test", "--no-transfer-progress"]
+ENTRYPOINT ["google-cloud-sdk/bin/gcloud","auth activate-service-account","image-repo-account@cn25-g15-tripmonkey.iam.gserviceaccount.com","--key-file=sa-key.json","--verbosity=debug","&&","./mvnw", "-Dmaven.repo.local=.m2", "test", "--no-transfer-progress"]
